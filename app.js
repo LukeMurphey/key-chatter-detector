@@ -3,7 +3,7 @@ class KeypressDuplicateTracker {
         this.keypressHistory = [];
         this.duplicateCounts = {};
         this.totalKeypresses = 0;
-        this.timeWindow = 500; // Default time window in milliseconds
+        this.timeWindow = 50; // Default time window in milliseconds
         
         this.initializeElements();
         this.bindEvents();
