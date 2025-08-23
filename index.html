@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keypress Duplicate Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Keypress Duplicate Tracker</h1>
+            <p class="subtitle">Monitor duplicate keypresses within a specified time window</p>
+        </header>
+
+        <main class="main-content">
+            <div class="controls-section">
+                <div class="form-group">
+                    <label for="timeWindow" class="form-label">Time Window (milliseconds)</label>
+                    <input type="number" id="timeWindow" class="form-control" value="500" min="50" max="5000" step="50">
+                    <small class="help-text">Keypresses within this duration are considered duplicates</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="textInput" class="form-label">Type here to monitor keypresses</label>
+                    <textarea id="textInput" class="form-control text-area" placeholder="Start typing to detect duplicate keypresses..." rows="6"></textarea>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2>Duplicate Keypresses Detected</h2>
+                <div id="resultsContainer" class="results-container">
+                    <p class="no-results">No duplicate keypresses detected</p>
+                </div>
+                <div id="statsContainer" class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Keypresses:</span>
+                        <span id="totalKeypresses" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Unique Characters:</span>
+                        <span id="uniqueChars" class="stat-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>How it works:</h3>
+                <ul>
+                    <li>Set your desired time window in milliseconds</li>
+                    <li>Start typing in the text area</li>
+                    <li>The app detects when you press the same key multiple times within the time window</li>
+                    <li>Results update in real-time as you type</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
