@@ -738,218 +738,247 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-/* Additional styles for the Keypress Duplicate Tracker */
-
-.header {
+/* App-specific styles */
+.app-header {
   text-align: center;
   margin-bottom: var(--space-32);
   padding: var(--space-24) 0;
 }
 
-.header h1 {
-  margin-bottom: var(--space-8);
-  color: var(--color-text);
-}
-
-.subtitle {
+.app-description {
   color: var(--color-text-secondary);
   font-size: var(--font-size-lg);
-  margin: 0;
+  margin: var(--space-16) auto 0;
+  max-width: 600px;
 }
 
-.main-content {
-  max-width: 800px;
+.app-main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-24);
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--space-16);
 }
 
-.controls-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  margin-bottom: var(--space-24);
-  box-shadow: var(--shadow-sm);
+@media (min-width: 768px) {
+  .app-main {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 
+      "input results"
+      "stats stats";
+  }
+  
+  .input-section {
+    grid-area: input;
+  }
+  
+  .results-section {
+    grid-area: results;
+  }
+  
+  .stats-section {
+    grid-area: stats;
+  }
 }
 
-.help-text {
-  display: block;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin-top: var(--space-4);
-}
-
-.text-area {
+/* Form enhancements */
+.text-input {
+  min-height: 140px;
   resize: vertical;
-  min-height: 120px;
   font-family: var(--font-family-mono);
-  font-size: var(--font-size-md);
-  line-height: 1.6;
 }
 
-.results-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
-  margin-bottom: var(--space-24);
-  box-shadow: var(--shadow-sm);
+.form-help {
+  display: block;
+  margin-top: var(--space-4);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
-.results-section h2 {
-  margin-bottom: var(--space-16);
-  color: var(--color-text);
-  font-size: var(--font-size-xl);
-}
-
-.results-container {
-  margin-bottom: var(--space-20);
-}
-
+/* Results styling */
 .no-results {
+  text-align: center;
+  padding: var(--space-32);
+}
+
+.text-muted {
   color: var(--color-text-secondary);
   font-style: italic;
-  text-align: center;
-  padding: var(--space-16);
-  margin: 0;
 }
 
-.duplicate-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-12) var(--space-16);
-  margin-bottom: var(--space-8);
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-card-border-inner);
-  border-radius: var(--radius-base);
-  transition: all var(--duration-fast) var(--ease-standard);
+.results-table {
+  overflow-x: auto;
 }
 
-.duplicate-item:hover {
-  background: var(--color-bg-2);
+.duplicate-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--space-16);
 }
 
-.duplicate-char {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  background: var(--color-secondary);
-  padding: var(--space-4) var(--space-8);
-  border-radius: var(--radius-sm);
-  min-width: 40px;
-  text-align: center;
+.duplicate-table th,
+.duplicate-table td {
+  text-align: left;
+  padding: var(--space-12) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.duplicate-info {
-  flex: 1;
-  margin: 0 var(--space-16);
-}
-
-.duplicate-label {
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text);
-}
-
-.duplicate-count {
+.duplicate-table th {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  background-color: var(--color-bg-1);
+  position: sticky;
+  top: 0;
 }
 
-.duplicate-badge {
-  background: var(--color-primary);
-  color: var(--color-btn-primary-text);
-  padding: var(--space-4) var(--space-12);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
+.duplicate-table td {
+  font-size: var(--font-size-base);
+}
+
+.duplicate-table .char-display {
+  font-family: var(--font-family-mono);
+  background-color: var(--color-secondary);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-sm);
   font-weight: var(--font-weight-medium);
 }
 
-.stats-container {
-  display: flex;
-  gap: var(--space-24);
-  padding: var(--space-16);
-  background: var(--color-bg-3);
-  border-radius: var(--radius-base);
+.duplicate-table .count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: var(--space-2) var(--space-8);
+  background-color: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+}
+
+.duplicate-table .timestamp {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
+}
+
+/* Stats section */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-16);
 }
 
 .stat-item {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+  padding: var(--space-16);
+  background-color: var(--color-bg-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
 .stat-label {
-  display: block;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   margin-bottom: var(--space-4);
 }
 
 .stat-value {
-  display: block;
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary);
+  font-family: var(--font-family-mono);
 }
 
-.help-section {
-  background: var(--color-bg-4);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-24);
+/* Card header improvements */
+.card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-card-border-inner);
 }
 
-.help-section h3 {
-  margin-bottom: var(--space-12);
-  color: var(--color-text);
-  font-size: var(--font-size-lg);
-}
-
-.help-section ul {
+.card__header h2 {
   margin: 0;
-  padding-left: var(--space-20);
+  font-size: var(--font-size-xl);
 }
 
-.help-section li {
-  margin-bottom: var(--space-8);
-  color: var(--color-text-secondary);
-  line-height: var(--line-height-normal);
-}
-
-.help-section li:last-child {
-  margin-bottom: 0;
-}
-
-/* Special character display */
-.special-char {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .main-content {
-    padding: 0 var(--space-12);
+/* Animation for new entries */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  .controls-section,
-  .results-section,
-  .help-section {
-    padding: var(--space-16);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .stats-container {
+}
+
+.duplicate-table tbody tr {
+  animation: slideIn var(--duration-normal) var(--ease-standard);
+}
+
+/* Highlight recent duplicates */
+.recent-duplicate {
+  background-color: var(--color-bg-3);
+  border-left: 3px solid var(--color-success);
+}
+
+.recent-duplicate .count-badge {
+  background-color: var(--color-success);
+  animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Responsive improvements */
+@media (max-width: 767px) {
+  .card__header {
     flex-direction: column;
-    gap: var(--space-12);
-  }
-  
-  .duplicate-item {
-    flex-direction: column;
-    align-items: flex-start;
     gap: var(--space-8);
+    align-items: stretch;
   }
   
-  .duplicate-info {
-    margin: 0;
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
+  
+  .duplicate-table {
+    font-size: var(--font-size-sm);
+  }
+  
+  .duplicate-table th,
+  .duplicate-table td {
+    padding: var(--space-8) var(--space-6);
+  }
+}
+
+/* Empty state improvements */
+.no-results {
+  background-color: var(--color-bg-4);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+}
+
+/* Focus improvements for accessibility */
+#textInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+#timeWindow:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
 }
