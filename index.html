@@ -3,56 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keypress Duplicate Tracker</title>
+    <title>Duplicate Keypress Detector</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>Key Chatter Tool</h1>
-            <p class="subtitle">Detect possible key chatter by detecting duplicate characters that aren't likely typed by a human but were caused by
-                <a href="https://hexgears.com/blogs/blogs-articles/what-is-mechanical-keyboard-key-bounce" target="_blank">"key chatter" or "key bounce"</a></p>
+        <header class="app-header">
+            <h1>Duplicate Keypress Detector</h1>
+            <p class="app-description">
+                Detect possible key chatter by detecting duplicate characters that aren't likely typed by a human but were caused by
+                <a href="https://hexgears.com/blogs/blogs-articles/what-is-mechanical-keyboard-key-bounce" target="_blank">"key chatter" or "key bounce"</a>
+            </p>
         </header>
 
-        <main class="main-content">
-            <div class="controls-section">
-                <div class="form-group">
-                    <label for="timeWindow" class="form-label">Time Window (milliseconds)</label>
-                    <input type="number" id="timeWindow" class="form-control" value="50" min="20" max="1000" step="50">
-                    <small class="help-text">Keypresses within this duration are considered duplicates</small>
-                </div>
+        <main class="app-main">
+            <div class="input-section">
+                <div class="card">
+                    <div class="card__body">
+                        <div class="form-group">
+                            <label class="form-label" for="timeWindow">
+                                Time Window (milliseconds)
+                            </label>
+                            <input 
+                                type="number" 
+                                id="timeWindow" 
+                                class="form-control" 
+                                value="50" 
+                                min="1" 
+                                max="10000"
+                                placeholder="Enter milliseconds"
+                            >
+                            <small class="form-help">
+                                Keypresses within this time frame will be considered duplicates if consecutive
+                            </small>
+                        </div>
 
-                <div class="form-group">
-                    <label for="textInput" class="form-label">Type here to monitor keypresses</label>
-                    <textarea id="textInput" class="form-control text-area" placeholder="Start typing to detect duplicate keypresses..." rows="6"></textarea>
+                        <div class="form-group">
+                            <label class="form-label" for="textInput">
+                                Type here to test duplicate keypresses
+                            </label>
+                            <textarea 
+                                id="textInput" 
+                                class="form-control text-input" 
+                                rows="6" 
+                                placeholder="Start typing to detect duplicate keypresses..."
+                            ></textarea>
+                            <small class="form-help">
+                                Try pressing keys quickly in succession to test duplicate detection
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="results-section">
-                <h2>Duplicate Keypresses Detected</h2>
-                <div id="resultsContainer" class="results-container">
-                    <p class="no-results">No duplicate keypresses detected</p>
-                </div>
-                <div id="statsContainer" class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Keypresses:</span>
-                        <span id="totalKeypresses" class="stat-value">0</span>
+                <div class="card">
+                    <div class="card__header">
+                        <h2>Duplicate Keypress Results</h2>
+                        <button id="clearResults" class="btn btn--sm btn--outline">Clear Results</button>
                     </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Unique Characters:</span>
-                        <span id="uniqueChars" class="stat-value">0</span>
+                    <div class="card__body">
+                        <div id="resultsContainer">
+                            <div class="no-results">
+                                <p class="text-muted">No duplicates detected yet. Start typing to see results.</p>
+                            </div>
+                        </div>
+                        <div id="resultsTable" class="results-table hidden">
+                            <table class="duplicate-table">
+                                <thead>
+                                    <tr>
+                                        <th>Character</th>
+                                        <th>Duplicate Count</th>
+                                        <th>Last Detected</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="help-section">
-                <h3>How it works:</h3>
-                <ul>
-                    <li>Set your desired time window in milliseconds</li>
-                    <li>Start typing in the text area</li>
-                    <li>The app detects when possible key chatter has been detected</li>
-                    <li>Results update in real-time as you type</li>
-                </ul>
+            <div class="stats-section">
+                <div class="card">
+                    <div class="card__body">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Duplicates</span>
+                                <span class="stat-value" id="totalDuplicates">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Characters with Duplicates</span>
+                                <span class="stat-value" id="uniqueCharacters">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Current Time Window</span>
+                                <span class="stat-value" id="currentTimeWindow">50ms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>

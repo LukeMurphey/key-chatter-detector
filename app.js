@@ -1,287 +1,221 @@
-class KeypressDuplicateTracker {
+class DuplicateKeypressDetector {
     constructor() {
-        this.keypressHistory = [];
-        this.duplicateCounts = {};
-        this.totalKeypresses = 0;
-        this.timeWindow = 50; // Default time window in milliseconds
+        this.timeWindow = 50;
+        this.lastKey = null;
+        this.lastKeyTime = 0;
+        this.duplicateCounts = new Map();
+        this.lastDetectedTimes = new Map();
         
         this.initializeElements();
-        this.bindEvents();
-        this.updateDisplay();
+        this.attachEventListeners();
+        this.updateStats();
     }
-    
+
     initializeElements() {
         this.timeWindowInput = document.getElementById('timeWindow');
         this.textInput = document.getElementById('textInput');
         this.resultsContainer = document.getElementById('resultsContainer');
-        this.totalKeypressesEl = document.getElementById('totalKeypresses');
-        this.uniqueCharsEl = document.getElementById('uniqueChars');
+        this.resultsTable = document.getElementById('resultsTable');
+        this.resultsTableBody = document.getElementById('resultsTableBody');
+        this.clearButton = document.getElementById('clearResults');
+        this.totalDuplicatesElement = document.getElementById('totalDuplicates');
+        this.uniqueCharactersElement = document.getElementById('uniqueCharacters');
+        this.currentTimeWindowElement = document.getElementById('currentTimeWindow');
+        
+        this.updateTimeWindowDisplay();
     }
-    
-    bindEvents() {
-        // Fix time window input handling
-        this.timeWindowInput.addEventListener('change', (e) => {
-            const newValue = parseInt(e.target.value);
-            if (!isNaN(newValue) && newValue >= 50 && newValue <= 5000) {
-                console.log(`Time window changed to: ${newValue}ms`);
-                this.timeWindow = newValue;
-                this.recalculateDuplicates();
-                this.updateDisplay();
-            } else {
-                // Reset to current value if invalid
-                e.target.value = this.timeWindow;
-            }
-        });
-        
-        // Handle keypress events - use input event to capture all changes
-        this.textInput.addEventListener('input', (e) => {
-            this.handleTextInput(e);
-        });
-        
-        // Also monitor keydown for immediate response
-        this.textInput.addEventListener('keydown', (e) => {
-            // Use setTimeout to ensure the character is added to the text area first
-            setTimeout(() => {
-                this.processCurrentText();
-            }, 1);
-        });
-        
-        // Clean up old keypresses periodically
-        this.cleanupInterval = setInterval(() => {
-            this.cleanupOldKeypresses();
-        }, 500);
-    }
-    
-    handleTextInput(event) {
-        const currentText = event.target.value;
-        
-        if (currentText.trim() === '') {
-            this.clearHistory();
-            this.updateDisplay();
-            return;
-        }
-        
-        this.processCurrentText();
-    }
-    
-    processCurrentText() {
-        const currentText = this.textInput.value;
-        const currentTime = Date.now();
-        
-        // If text is empty, clear history
-        if (currentText.length === 0) {
-            this.clearHistory();
-            this.updateDisplay();
-            return;
-        }
-        
-        // If we have fewer keypresses recorded than characters in text, 
-        // we need to catch up (this handles paste, rapid typing, etc.)
-        const textLength = currentText.length;
-        
-        if (this.keypressHistory.length < textLength) {
-            // Add the missing keypresses
-            for (let i = this.keypressHistory.length; i < textLength; i++) {
-                const char = currentText[i];
-                const timestamp = currentTime - (textLength - i - 1) * 10; // Stagger timestamps slightly
-                
-                this.keypressHistory.push({ key: char, timestamp });
-                this.totalKeypresses++;
-                
-                console.log(`Adding keypress: "${char}" at ${timestamp}`);
-            }
+
+    attachEventListeners() {
+        // Use input event to track actual character input
+        this.textInput.addEventListener('input', (event) => {
+            // Get the last character that was input
+            const inputValue = event.target.value;
+            const inputType = event.inputType;
             
-            // Recalculate duplicates after adding new keypresses
-            this.recalculateDuplicates();
-            this.updateDisplay();
-        }
-        
-        // If we have more keypresses than text length, user deleted text
-        if (this.keypressHistory.length > textLength) {
-            // Trim excess keypresses
-            this.keypressHistory = this.keypressHistory.slice(0, textLength);
-            this.totalKeypresses = this.keypressHistory.length;
-            
-            // Recalculate duplicates after removal
-            this.recalculateDuplicates();
-            this.updateDisplay();
-        }
-    }
-    
-    recalculateDuplicates() {
-        // Clear existing duplicates
-        this.duplicateCounts = {};
-        
-        if (this.keypressHistory.length === 0) {
-            return;
-        }
-        
-        console.log(`Recalculating duplicates for ${this.keypressHistory.length} keypresses with ${this.timeWindow}ms window`);
-        
-        // For each keypress, check if there are duplicates within the time window
-        this.keypressHistory.forEach((currentPress, index) => {
-            const { key, timestamp } = currentPress;
-            const timeWindowStart = timestamp - this.timeWindow;
-            
-            // Find all presses of the same key within the time window before this press
-            const duplicatesInWindow = this.keypressHistory.filter((press, pressIndex) => 
-                pressIndex < index && // Only look at previous presses
-                press.key === key && 
-                press.timestamp >= timeWindowStart && 
-                press.timestamp <= timestamp
-            );
-            
-            // If we found duplicates, count this as a duplicate occurrence
-            if (duplicatesInWindow.length > 0) {
-                if (!this.duplicateCounts[key]) {
-                    this.duplicateCounts[key] = 0;
+            // Only process insertText and insertCompositionText events
+            if (inputType === 'insertText' || inputType === 'insertCompositionText') {
+                const data = event.data;
+                if (data && data.length === 1) {
+                    this.handleCharacterInput(data);
                 }
-                this.duplicateCounts[key]++;
             }
         });
-        
-        console.log('Calculated duplicates:', this.duplicateCounts);
+
+        // Also listen to keydown for special keys like Backspace, Enter, etc.
+        this.textInput.addEventListener('keydown', (event) => {
+            const specialChars = {
+                'Backspace': 'Backspace',
+                'Enter': 'Enter',
+                ' ': 'Space'
+            };
+            
+            if (specialChars[event.key]) {
+                this.handleCharacterInput(specialChars[event.key]);
+            }
+        });
+
+        this.timeWindowInput.addEventListener('input', () => {
+            this.handleTimeWindowChange();
+        });
+
+        this.clearButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.clearResults();
+        });
     }
-    
-    cleanupOldKeypresses() {
-        // Only clean up if we have a reasonable number of keypresses
-        if (this.keypressHistory.length < 1000) {
-            return;
-        }
-        
+
+    handleCharacterInput(char) {
         const currentTime = Date.now();
-        const cutoffTime = currentTime - (this.timeWindow * 5); // Keep longer history
         
-        const originalLength = this.keypressHistory.length;
-        this.keypressHistory = this.keypressHistory.filter(press => 
-            press.timestamp >= cutoffTime
-        );
+        // Check for duplicate
+        const timeDiff = currentTime - this.lastKeyTime;
+        const isSameChar = this.lastKey === char;
+        const withinWindow = timeDiff <= this.timeWindow;
+        const hasLastTime = this.lastKeyTime > 0;
         
-        if (this.keypressHistory.length !== originalLength) {
-            console.log(`Cleaned up ${originalLength - this.keypressHistory.length} old keypresses`);
-            this.totalKeypresses = this.keypressHistory.length;
-            this.recalculateDuplicates();
-            this.updateDisplay();
+        if (isSameChar && withinWindow && hasLastTime) {
+            this.recordDuplicate(char);
         }
+        
+        // Update for next comparison
+        this.lastKey = char;
+        this.lastKeyTime = currentTime;
     }
-    
-    clearHistory() {
-        console.log('Clearing history...');
-        this.keypressHistory = [];
-        this.duplicateCounts = {};
-        this.totalKeypresses = 0;
+
+    recordDuplicate(char) {
+        const currentCount = this.duplicateCounts.get(char) || 0;
+        this.duplicateCounts.set(char, currentCount + 1);
+        this.lastDetectedTimes.set(char, Date.now());
+        
+        this.updateResultsDisplay();
+        this.updateStats();
     }
-    
-    getCharacterDisplayName(char) {
+
+    updateResultsDisplay() {
+        // Show results table
+        const noResults = this.resultsContainer.querySelector('.no-results');
+        if (noResults) {
+            noResults.style.display = 'none';
+        }
+        this.resultsTable.classList.remove('hidden');
+
+        // Clear and rebuild table
+        this.resultsTableBody.innerHTML = '';
+
+        const sortedEntries = Array.from(this.duplicateCounts.entries())
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+        sortedEntries.forEach(([char, count]) => {
+            const row = this.createTableRow(char, count);
+            this.resultsTableBody.appendChild(row);
+        });
+    }
+
+    createTableRow(char, count) {
+        const row = document.createElement('tr');
+        const lastDetected = this.lastDetectedTimes.get(char);
+        const isRecent = Date.now() - lastDetected < 2000;
+        
+        if (isRecent) {
+            row.classList.add('recent-duplicate');
+            setTimeout(() => row.classList.remove('recent-duplicate'), 2000);
+        }
+
+        const displayChar = this.displayCharacter(char);
+        const timestamp = this.formatTimestamp(lastDetected);
+
+        row.innerHTML = `
+            <td><span class="char-display">${displayChar}</span></td>
+            <td><span class="count-badge">${count}</span></td>
+            <td><span class="timestamp">${timestamp}</span></td>
+        `;
+
+        return row;
+    }
+
+    displayCharacter(char) {
         const specialChars = {
             ' ': 'Space',
-            '\n': 'Enter',
+            'Space': 'Space',
+            'Enter': 'Enter',
+            'Backspace': 'Backspace',
             '\t': 'Tab'
         };
-        
         return specialChars[char] || char;
     }
-    
-    updateDisplay() {
-        this.updateStats();
-        this.updateDuplicatesList();
+
+    formatTimestamp(timestamp) {
+        return new Date(timestamp).toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit'
+        });
     }
-    
-    updateStats() {
-        this.totalKeypressesEl.textContent = this.totalKeypresses;
-        
-        const uniqueChars = new Set(this.keypressHistory.map(press => press.key)).size;
-        this.uniqueCharsEl.textContent = uniqueChars;
-    }
-    
-    updateDuplicatesList() {
-        const duplicateEntries = Object.entries(this.duplicateCounts);
-        
-        console.log('Updating display with duplicates:', this.duplicateCounts);
-        
-        if (duplicateEntries.length === 0) {
-            this.resultsContainer.innerHTML = '<p class="no-results">No duplicate keypresses detected</p>';
+
+    handleTimeWindowChange() {
+        const newValue = parseInt(this.timeWindowInput.value);
+        if (isNaN(newValue) || newValue < 1) {
+            this.timeWindowInput.value = this.timeWindow;
             return;
         }
         
-        // Sort by duplicate count (highest first)
-        duplicateEntries.sort((a, b) => b[1] - a[1]);
-        
-        const duplicatesHTML = duplicateEntries.map(([char, count]) => {
-            const displayName = this.getCharacterDisplayName(char);
-            const isSpecialChar = displayName !== char;
-            
-            return `
-                <div class="duplicate-item">
-                    <div class="duplicate-char ${isSpecialChar ? 'special-char' : ''}">${displayName}</div>
-                    <div class="duplicate-info">
-                        <div class="duplicate-label">Character: "${char}"</div>
-                        <div class="duplicate-count">${count} duplicate${count > 1 ? 's' : ''} detected</div>
-                    </div>
-                    <div class="duplicate-badge">${count}</div>
-                </div>
-            `;
-        }).join('');
-        
-        this.resultsContainer.innerHTML = duplicatesHTML;
+        this.timeWindow = newValue;
+        this.updateTimeWindowDisplay();
+        this.resetTracking();
     }
-    
-    // Method to simulate typing for testing
-    simulateTyping(text, delayMs = 100) {
-        this.textInput.value = '';
-        this.clearHistory();
-        
-        let index = 0;
-        const typeChar = () => {
-            if (index < text.length) {
-                this.textInput.value += text[index];
-                const event = new Event('input', { bubbles: true });
-                this.textInput.dispatchEvent(event);
-                index++;
-                setTimeout(typeChar, delayMs);
-            }
-        };
-        
-        typeChar();
+
+    updateTimeWindowDisplay() {
+        this.currentTimeWindowElement.textContent = `${this.timeWindow}ms`;
     }
-    
-    // Method to get current statistics (useful for debugging)
-    getStats() {
-        return {
-            totalKeypresses: this.totalKeypresses,
-            uniqueCharacters: new Set(this.keypressHistory.map(press => press.key)).size,
-            duplicateCounts: { ...this.duplicateCounts },
-            recentKeypresses: this.keypressHistory.slice(-10),
-            timeWindow: this.timeWindow,
-            historyLength: this.keypressHistory.length,
-            currentText: this.textInput.value
-        };
+
+    resetTracking() {
+        this.lastKey = null;
+        this.lastKeyTime = 0;
     }
-    
-    // Clean up on destroy
-    destroy() {
-        if (this.cleanupInterval) {
-            clearInterval(this.cleanupInterval);
+
+    updateStats() {
+        const totalDuplicates = Array.from(this.duplicateCounts.values())
+            .reduce((sum, count) => sum + count, 0);
+        const uniqueCharacters = this.duplicateCounts.size;
+        
+        this.totalDuplicatesElement.textContent = totalDuplicates;
+        this.uniqueCharactersElement.textContent = uniqueCharacters;
+    }
+
+    clearResults() {
+        this.duplicateCounts.clear();
+        this.lastDetectedTimes.clear();
+        this.resetTracking();
+        
+        this.resultsTableBody.innerHTML = '';
+        this.resultsTable.classList.add('hidden');
+        
+        const noResults = this.resultsContainer.querySelector('.no-results');
+        if (noResults) {
+            noResults.style.display = 'block';
         }
+        
+        this.updateStats();
     }
 }
 
-// Initialize the application when the DOM is loaded
+// Initialize application
 document.addEventListener('DOMContentLoaded', () => {
-    const tracker = new KeypressDuplicateTracker();
+    const detector = new DuplicateKeypressDetector();
+    window.detector = detector; // For debugging
     
-    // Make tracker available globally for debugging
-    window.keypressTracker = tracker;
+    // Focus text input
+    const textInput = document.getElementById('textInput');
+    if (textInput) {
+        setTimeout(() => textInput.focus(), 100);
+    }
     
-    // Add some helpful console messages
-    console.log('Keypress Duplicate Tracker initialized');
-    console.log('Access tracker instance via window.keypressTracker');
-    console.log('Use tracker.getStats() to view current statistics');
-    console.log('Use tracker.simulateTyping("hello", 200) to test with simulated typing');
-    console.log(`Default time window: ${tracker.timeWindow}ms`);
-    
-    // Clean up on page unload
-    window.addEventListener('beforeunload', () => {
-        tracker.destroy();
+    // Keyboard shortcut
+    document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+            event.preventDefault();
+            detector.clearResults();
+        }
     });
 });
