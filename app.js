@@ -1,6 +1,6 @@
 class DuplicateKeypressDetector {
     constructor() {
-        this.timeWindow = 50;
+        this.timeWindow = 100;
         this.lastKey = null;
         this.lastKeyTime = 0;
         this.duplicateCounts = new Map();
